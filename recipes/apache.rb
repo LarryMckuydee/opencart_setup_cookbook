@@ -34,6 +34,7 @@ apache_configuration = '<Directory /home/larrycoc/>
 
 execute 'Whitelist /home/larrycoc in Apache' do
   command "echo '#{apache_configuration}' >> #{apache_conf_file}"
+  not_if "grep '/home/larrycoc/' /etc/apache2/apache2.conf"
 end
 
 
@@ -55,5 +56,10 @@ node['opencart_setup']['sites'].each do |sitename, data|
       servername: data["servername"]
     )
     notifies :restart, 'service[apache2]'
+  end
+  
+  execute "enable site" do
+    command "a2ensite #{sitename}"
+    not_if "ls /etc/apache2/sites-enabled/ | grep larryco.my"
   end
 end
