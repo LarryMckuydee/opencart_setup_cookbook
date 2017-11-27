@@ -16,30 +16,32 @@ service 'apache2' do
   action [:enable, :start]
 end
 
-directory 'home/larrycoc/public_html' do
+www_path = "/home/larrycoc"
+
+directory "#{www_path}/public_html" do
   mode '755'
 end
 
-directory 'home/larrycoc/logs' do
+directory "#{www_path}/logs" do
   owner 'root'
   mode '755'
   action :create
 end
 
 apache_conf_file = '/etc/apache2/apache2.conf'
-apache_configuration = '<Directory /home/larrycoc/>
+apache_configuration = "<Directory #{www_path}/>
           AllowOverride None
           Require all granted
-  </Directory>'
+  </Directory>"
 
-execute 'Whitelist /home/larrycoc in Apache' do
+execute "Whitelist #{www_path} in Apache" do
   command "echo '#{apache_configuration}' >> #{apache_conf_file}"
-  not_if "grep '/home/larrycoc/' /etc/apache2/apache2.conf"
+  not_if "grep '#{www_path}/' /etc/apache2/apache2.conf"
 end
 
 
 node['opencart_setup']['sites'].each do |sitename, data|
-  document_root = '/home/larrycoc'
+  document_root = www_path
 
   directory document_root do
     mode "0755"
@@ -57,7 +59,7 @@ node['opencart_setup']['sites'].each do |sitename, data|
     )
     notifies :restart, 'service[apache2]'
   end
-  
+
   execute "enable site" do
     command "a2ensite #{sitename}"
     not_if "ls /etc/apache2/sites-enabled/ | grep larryco.my"
